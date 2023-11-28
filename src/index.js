@@ -26,53 +26,87 @@ function createGrid() {
 	}
 
 	ships.forEach((ship) => {
-		console.log(checkCellAvailability(ship.length))
-		if (checkCellAvailability(ship.length)) {
-			randomCells.forEach(cell => {
-				selectedCells.push(cell);
+		ship.position = checkCellAvailability(ship.length);
+		console.log(ship.position)
+	});
+
+	const playerButtons = document.querySelectorAll('#player-field .cell');
+
+	playerButtons.forEach(button => {
+		button.addEventListener('click', (e) => {
+			const strippedId = button.id.substring("player-field-".length);
+
+			ships.forEach(ship => {
+				if (ship.position.includes(`${strippedId}`)) {
+					console.log(`Ship with length ${ship.length} has the cell ${strippedId} in its position.`);
+					ship.hit();
+					button.dataset.shipHit = true;
+				}
 			});
 
-			console.log(selectedCells)
-			let markedCell;
-
-			randomCells.forEach((cell) => {
-				cell = 'player-field-' + cell;
-				markedCell = document.getElementById(cell);
-				markedCell.dataset.marked = true;
-			})
-		}
+			button.disabled = true;
+		});
 	});
 }
 
 function checkCellAvailability(length) {
-	const randomCells = getStartingCells(length);
-	randomCells.forEach(cell => {
-		if (selectedCells.includes(cell)) {
-			checkCellAvailability(length);
-		}
-		return true;
-	});
+	let randomCells = getStartingCells(length);
+	let markedCell;
+
+	// randomCells.forEach(cell => {
+	// 	selectedCells.push(cell);
+	// 	cell = 'player-field-' + cell;
+	// 	markedCell = document.getElementById(cell);
+	// 	markedCell.dataset.marked = true;
+	// });
+
+	return randomCells;
 }
 
 function getStartingCells(length) {
 	const row = Math.floor(Math.random() * 10) + 1;
 	const col = String.fromCharCode('A'.charCodeAt(0) + Math.floor(Math.random() * 10));
 
+	const randomValue = Math.random();
 
-	if (row + (length - 1) > 10) {
-		return getStartingCells(length);
-	} else {
-		let selectedCellsShip = [];
-		let tempCell;
+	if (randomValue < 0.5) {
+		if (col.charCodeAt(0) + (length - 1) > 'J'.charCodeAt(0) || selectedCells.includes(row + col)) {
+			return getStartingCells(length);
+		} else {
+			let selectedCellsShip = [];
+			let tempCell;
 
-		for (let i = 0; i < length; i++) {
-			let arrayIncrement = row + i;
-			tempCell = arrayIncrement + col;
-			selectedCellsShip.push(tempCell);
+			for (let i = 0; i < length; i++) {
+				let arrayIncrement = String.fromCharCode(col.charCodeAt(0) + i);
+				tempCell = row + arrayIncrement;
+				if (selectedCells.includes(tempCell)) {
+					return getStartingCells(length);
+				} else {
+					selectedCellsShip.push(tempCell);
+				}
+			}
+
+			return selectedCellsShip;
 		}
+	} else {
+		if (row + (length - 1) > 10 || selectedCells.includes(row + col)) {
+			return getStartingCells(length);
+		} else {
+			let selectedCellsShip = [];
+			let tempCell;
 
-		// console.log(selectedCellsShip)
-		return selectedCellsShip;
+			for (let i = 0; i < length; i++) {
+				let arrayIncrement = row + i;
+				tempCell = arrayIncrement + col;
+				if (selectedCells.includes(tempCell)) {
+					return getStartingCells(length);
+				} else {
+					selectedCellsShip.push(tempCell);
+				}
+			}
+
+			return selectedCellsShip;
+		}
 	}
 }
 
@@ -81,6 +115,7 @@ class Ship {
 		this.length = length;
 		this.hits = 0;
 		this.sunk = false;
+		this.position = [];
 	}
 
 	hit() {

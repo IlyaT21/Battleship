@@ -23,6 +23,15 @@ body {
 				cursor: pointer;
 			}
 
+			&[disabled] {
+				background-color: rgba(0, 0, 0, 0.405);
+				cursor: not-allowed;
+			}
+
+			&[data-ship-hit="true"] {
+				background-color: red !important;
+			}
+
 			&[data-marked="true"] {
 				background-color: green;
 			}
