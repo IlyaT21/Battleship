@@ -2,6 +2,31 @@ import './styles.scss';
 
 function createInitialGrid() {
 	const CompField = document.getElementById("computer-field");
+	let vertHor = 'H';
+
+	const changeOrientationButton = document.getElementById('changeOrionetation');
+
+	const playerShips = [
+		new Ship(5),
+		new Ship(4),
+		new Ship(3),
+		new Ship(3),
+		new Ship(2),
+	];
+
+	playerShips.forEach((ship) => {
+		changeOrientationButton.addEventListener('click', () => {
+			vertHor = vertHor === 'H' ? 'V' : 'H';
+			let displayedCells = document.querySelectorAll('.cell');
+			displayedCells.forEach(cell => {
+				if (vertHor == 'H') {
+					cell.addEventListener('mouseover', (event) => handleCellHoverH(event, ship.length));
+				} else {
+					cell.addEventListener('mouseover', (event) => handleCellHoverV(event, ship.length));
+				}
+			});
+		});
+	});
 
 	for (let row = 1; row <= 10; row++) {
 		for (let col = 'A'.charCodeAt(0); col <= 'J'.charCodeAt(0); col++) {
@@ -9,19 +34,31 @@ function createInitialGrid() {
 			cell.classList.add("cell");
 			cell.id = `computer-field-${row}${String.fromCharCode(col)}`;
 
-			// Add a mouseover event listener
-			cell.addEventListener('mouseover', handleCellHover);
+			if (vertHor == 'H') {
+				cell.addEventListener('mouseover', (event) => handleCellHoverH(event, 4));
+			} else {
+				cell.addEventListener('mouseover', (event) => handleCellHoverV(event, 4));
+			}
+
 
 			CompField.appendChild(cell);
 		}
 	}
 }
 
-function handleCellHover(event) {
+function handleCellHoverV(event, increment) {
 	const currentCellId = event.target.id;
-	const col = currentCellId.charAt(16); // Extract the column from the cellId
-	const rowTemp = currentCellId.slice(15);
-	const row = rowTemp[0];
+	let row;
+	let col;
+
+	if (currentCellId.includes('10')) {
+		row = '10';
+		col = currentCellId.charAt(17);
+	} else {
+		const rowTemp = currentCellId.slice(15);
+		col = currentCellId.charAt(16);
+		row = rowTemp[0];
+	}
 
 	console.log(row + col)
 
@@ -30,8 +67,7 @@ function handleCellHover(event) {
 		cell.classList.remove('hovered');
 	});
 
-	// Apply hover effect to the next 5 buttons in the column
-	for (let i = 1; i <= 5; i++) {
+	for (let i = 1; i <= increment; i++) {
 		const nextRow = parseInt(row) + i;
 		const nextCellId = `computer-field-${parseInt(row) + i}${col}`;
 		const nextCell = document.getElementById(nextCellId);
@@ -39,8 +75,53 @@ function handleCellHover(event) {
 		if (nextCell) {
 			nextCell.classList.add('hovered');
 			event.target.classList.add('hovered');
+			allCells.forEach(cell => {
+				cell.style.cursor = 'pointer';
+			});
 		} else {
-			// Change cursor to 'not-allowed' if the next cell doesn't exist
+			const currentCell = document.getElementById(`computer-field-${row}${col}`);
+			console.log(currentCell)
+			if (currentCell) {
+				currentCell.style.cursor = 'not-allowed';
+				allCells.forEach(cell => {
+					cell.classList.remove('hovered');
+				});
+			}
+			break;
+		}
+	}
+}
+
+function handleCellHoverH(event, increment) {
+	const currentCellId = event.target.id;
+	let row;
+	let col;
+
+	if (currentCellId.includes('10')) {
+		row = '10';
+		col = currentCellId.charAt(17);
+	} else {
+		const rowTemp = currentCellId.slice(15);
+		col = currentCellId.charAt(16);
+		row = rowTemp[0];
+	}
+
+	console.log(row + col)
+
+	const allCells = document.querySelectorAll('.cell');
+	allCells.forEach(cell => {
+		cell.classList.remove('hovered');
+	});
+
+	for (let i = 1; i <= increment; i++) {
+		const nextCol = String.fromCharCode(col.charCodeAt(0) + i);
+		const nextCellId = `computer-field-${row}${nextCol}`;
+		const nextCell = document.getElementById(nextCellId);
+
+		if (nextCell) {
+			nextCell.classList.add('hovered');
+			event.target.classList.add('hovered');
+		} else {
 			const currentCell = document.getElementById(`computer-field-${row}${col}`);
 			if (currentCell) {
 				currentCell.style.cursor = 'not-allowed';
@@ -48,7 +129,7 @@ function handleCellHover(event) {
 					cell.classList.remove('hovered');
 				});
 			}
-			break; // Break the loop if any of the next cells doesn't exist
+			break;
 		}
 	}
 }
