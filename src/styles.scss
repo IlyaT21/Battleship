@@ -18,7 +18,12 @@ body {
 			line-height: 2;
 			background-color: transparent;
 
-			&:hover {
+			// &:hover {
+			// 	background-color: rgba(0, 0, 0, 0.205);
+			// 	cursor: pointer;
+			// }
+
+			&.hovered {
 				background-color: rgba(0, 0, 0, 0.205);
 				cursor: pointer;
 			}

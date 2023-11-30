@@ -1,10 +1,63 @@
 import './styles.scss';
 
-// Computer populated cells
-const selectedCells = [];
+function createInitialGrid() {
+	const CompField = document.getElementById("computer-field");
+
+	for (let row = 1; row <= 10; row++) {
+		for (let col = 'A'.charCodeAt(0); col <= 'J'.charCodeAt(0); col++) {
+			const cell = document.createElement("button");
+			cell.classList.add("cell");
+			cell.id = `computer-field-${row}${String.fromCharCode(col)}`;
+
+			// Add a mouseover event listener
+			cell.addEventListener('mouseover', handleCellHover);
+
+			CompField.appendChild(cell);
+		}
+	}
+}
+
+function handleCellHover(event) {
+	const currentCellId = event.target.id;
+	const col = currentCellId.charAt(16); // Extract the column from the cellId
+	const rowTemp = currentCellId.slice(15);
+	const row = rowTemp[0];
+
+	console.log(row + col)
+
+	const allCells = document.querySelectorAll('.cell');
+	allCells.forEach(cell => {
+		cell.classList.remove('hovered');
+	});
+
+	// Apply hover effect to the next 5 buttons in the column
+	for (let i = 1; i <= 5; i++) {
+		const nextRow = parseInt(row) + i;
+		const nextCellId = `computer-field-${parseInt(row) + i}${col}`;
+		const nextCell = document.getElementById(nextCellId);
+
+		if (nextCell) {
+			nextCell.classList.add('hovered');
+			event.target.classList.add('hovered');
+		} else {
+			// Change cursor to 'not-allowed' if the next cell doesn't exist
+			const currentCell = document.getElementById(`computer-field-${row}${col}`);
+			if (currentCell) {
+				currentCell.style.cursor = 'not-allowed';
+				allCells.forEach(cell => {
+					cell.classList.remove('hovered');
+				});
+			}
+			break; // Break the loop if any of the next cells doesn't exist
+		}
+	}
+}
 
 // Populate player grid
 function createGrid() {
+	// Computer populated cells
+	const selectedCells = [];
+
 	const field = document.getElementById("player-field");
 
 	// Create 5 ship objects
@@ -129,4 +182,6 @@ class Ship {
 	}
 }
 
-createGrid();
+// createGrid();
+
+createInitialGrid();
