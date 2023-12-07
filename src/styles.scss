@@ -1,5 +1,11 @@
 body {
 	#main {
+		.info-holder {
+			#changeOrionetation {
+				margin-bottom: 50px;
+			}
+		}
+		
 		.field {
 			display: grid;
 			grid-template-columns: repeat(10, 1fr);

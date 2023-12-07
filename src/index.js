@@ -1,10 +1,12 @@
 import './styles.scss';
 
+let currentShip = 0;
+
+let usablePlayerShips = [];
+
 function createInitialGrid() {
 	const CompField = document.getElementById("computer-field");
 	let vertHor = 'H';
-
-	const changeOrientationButton = document.getElementById('changeOrionetation');
 
 	const playerShips = [
 		new Ship(5),
@@ -14,19 +16,7 @@ function createInitialGrid() {
 		new Ship(2),
 	];
 
-	playerShips.forEach((ship) => {
-		changeOrientationButton.addEventListener('click', () => {
-			vertHor = vertHor === 'H' ? 'V' : 'H';
-			let displayedCells = document.querySelectorAll('.cell');
-			displayedCells.forEach(cell => {
-				if (vertHor == 'H') {
-					cell.addEventListener('mouseover', (event) => handleCellHoverH(event, ship.length));
-				} else {
-					cell.addEventListener('mouseover', (event) => handleCellHoverV(event, ship.length));
-				}
-			});
-		});
-	});
+	const changeOrientationButton = document.getElementById('changeOrionetation');
 
 	for (let row = 1; row <= 10; row++) {
 		for (let col = 'A'.charCodeAt(0); col <= 'J'.charCodeAt(0); col++) {
@@ -35,13 +25,54 @@ function createInitialGrid() {
 			cell.id = `computer-field-${row}${String.fromCharCode(col)}`;
 
 			if (vertHor == 'H') {
-				cell.addEventListener('mouseover', (event) => handleCellHoverH(event, 4));
+				cell.addEventListener('mouseover', (event) => handleCellHoverH(event, playerShips[currentShip].length - 1));
+				cell.addEventListener('click', (event) => handleCellClick(event, playerShips));
 			} else {
-				cell.addEventListener('mouseover', (event) => handleCellHoverV(event, 4));
+				cell.addEventListener('mouseover', (event) => handleCellHoverV(event, playerShips[currentShip].length - 1));
+				cell.addEventListener('click', (event) => handleCellClick(event, playerShips));
 			}
 
-
 			CompField.appendChild(cell);
+		}
+	}
+
+	changeOrientationButton.addEventListener('click', () => {
+		vertHor = vertHor === 'H' ? 'V' : 'H';
+		let displayedCells = document.querySelectorAll('.cell');
+		displayedCells.forEach(cell => {
+			if (vertHor == 'H') {
+				cell.addEventListener('mouseover', (event) => handleCellHoverH(event, playerShips[currentShip].length - 1));
+			} else {
+				cell.addEventListener('mouseover', (event) => handleCellHoverV(event, playerShips[currentShip].length - 1));
+			}
+		});
+	});
+
+	usablePlayerShips = playerShips;
+}
+
+function handleCellClick(event, shipArray) {
+	const clickedCell = event.target;
+	const allCells = document.querySelectorAll('.cell');
+
+	if (!clickedCell.dataset.marked == true) {
+		allCells.forEach(cell => {
+			if (cell.classList.contains('hovered')) {
+				cell.dataset.marked = true;
+				shipArray[currentShip].position.push(cell.id.substring("computer-field-".length));
+			}
+		});
+
+		currentShip++;
+
+		if (!shipArray[currentShip]) {
+			allCells.forEach(cell => {
+				cell.removeEventListener('mouseover', handleCellHoverH);
+				cell.removeEventListener('mouseover', handleCellHoverV);
+				cell.removeEventListener('click', handleCellClick);
+			});
+
+			createGrid();
 		}
 	}
 }
@@ -60,8 +91,6 @@ function handleCellHoverV(event, increment) {
 		row = rowTemp[0];
 	}
 
-	console.log(row + col)
-
 	const allCells = document.querySelectorAll('.cell');
 	allCells.forEach(cell => {
 		cell.classList.remove('hovered');
@@ -72,7 +101,7 @@ function handleCellHoverV(event, increment) {
 		const nextCellId = `computer-field-${parseInt(row) + i}${col}`;
 		const nextCell = document.getElementById(nextCellId);
 
-		if (nextCell) {
+		if (nextCell && !nextCell.dataset.marked == true) {
 			nextCell.classList.add('hovered');
 			event.target.classList.add('hovered');
 			allCells.forEach(cell => {
@@ -80,7 +109,6 @@ function handleCellHoverV(event, increment) {
 			});
 		} else {
 			const currentCell = document.getElementById(`computer-field-${row}${col}`);
-			console.log(currentCell)
 			if (currentCell) {
 				currentCell.style.cursor = 'not-allowed';
 				allCells.forEach(cell => {
@@ -106,8 +134,6 @@ function handleCellHoverH(event, increment) {
 		row = rowTemp[0];
 	}
 
-	console.log(row + col)
-
 	const allCells = document.querySelectorAll('.cell');
 	allCells.forEach(cell => {
 		cell.classList.remove('hovered');
@@ -118,9 +144,12 @@ function handleCellHoverH(event, increment) {
 		const nextCellId = `computer-field-${row}${nextCol}`;
 		const nextCell = document.getElementById(nextCellId);
 
-		if (nextCell) {
+		if (nextCell && !nextCell.dataset.marked == true) {
 			nextCell.classList.add('hovered');
 			event.target.classList.add('hovered');
+			allCells.forEach(cell => {
+				cell.style.cursor = 'pointer';
+			});
 		} else {
 			const currentCell = document.getElementById(`computer-field-${row}${col}`);
 			if (currentCell) {
@@ -135,10 +164,9 @@ function handleCellHoverH(event, increment) {
 }
 
 // Populate player grid
-function createGrid() {
-	// Computer populated cells
-	const selectedCells = [];
+const selectedCells = [];
 
+function createGrid() {
 	const field = document.getElementById("player-field");
 
 	// Create 5 ship objects
@@ -178,21 +206,60 @@ function createGrid() {
 				}
 			});
 
+			const allShipsSunk = ships.every(ship => ship.sunk === true);
+
+			if (allShipsSunk) {
+				document.getElementById('main-beam').innerText = 'Player Wins!'
+				let allCellsVictory = document.querySelectorAll('.cell');
+				allCellsVictory.forEach(cell => {
+					cell.removeEventListener('click');
+				});
+			}
+
 			button.disabled = true;
+
+			computerMove();
 		});
 	});
 }
 
+function computerMove() {
+	const computerFieldCells = document.querySelectorAll('#computer-field .cell');
+	const randomIndex = Math.floor(Math.random() * computerFieldCells.length);
+	const selectedCell = computerFieldCells[randomIndex];
+	const trimmedCell = selectedCell.id.substring("computer-field-".length);
+	console.log(trimmedCell)
+
+	if (!selectedCell.dataset.shipHit && !selectedCell.disabled) {
+		usablePlayerShips.forEach((ship) => {
+			if (ship.position.includes(trimmedCell)) {
+				ship.hit();
+				selectedCell.dataset.shipHit = true;
+			}
+		});
+
+		const allShipsSunkPlayer = usablePlayerShips.every(ship => ship.sunk === true);
+
+		if (allShipsSunkPlayer) {
+			document.getElementById('main-beam').innerText = 'Computer Wins!';
+		}
+
+		selectedCell.disabled = true;
+	} else {
+		computerMove();
+	}
+}
+
 function checkCellAvailability(length) {
 	let randomCells = getStartingCells(length);
-	let markedCell;
+	// let markedCell;
 
-	// randomCells.forEach(cell => {
-	// 	selectedCells.push(cell);
-	// 	cell = 'player-field-' + cell;
-	// 	markedCell = document.getElementById(cell);
-	// 	markedCell.dataset.marked = true;
-	// });
+	randomCells.forEach(cell => {
+		selectedCells.push(cell);
+		// cell = 'player-field-' + cell;
+		// markedCell = document.getElementById(cell);
+		// markedCell.dataset.marked = true;
+	});
 
 	return randomCells;
 }
